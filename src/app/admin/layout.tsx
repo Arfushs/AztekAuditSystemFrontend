@@ -43,7 +43,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <div className="min-h-screen bg-gray-50">
                 <header className="bg-white shadow-sm border-b">
                     <div className="px-6 py-4 flex justify-between items-center">
-                        <h1 style={{ color: 'black', fontWeight: 'bold' }} className="text-xl">Aztec Admin Panel</h1>
+                        <h1 style={{ color: 'black', fontWeight: 'bold' }} className="text-xl">Aztek Admin Panel</h1>
                         <div className="flex items-center space-x-4">
                             <span className="text-sm text-gray-600">Yönetici</span>
                             <button
