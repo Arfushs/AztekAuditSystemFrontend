@@ -43,8 +43,8 @@ export default function AdminDashboard() {
                 totalInspectors: users.filter(u => u.role === 'inspector').length,
                 totalReporters: users.filter(u => u.role === 'reporter').length,
                 totalReports: reports.length,
-                pendingReports: reports.filter(r => r.status === 'pending').length,
-                finalizedReports: reports.filter(r => r.status === 'finalized').length
+                finalizedReports: reports.filter(r => r.status === 'finalized').length,
+                pendingReports: reports.filter(r => r.status === 'pending').length
             });
         } catch (error) {
             console.error('Failed to load dashboard data:', error);
@@ -81,27 +81,6 @@ export default function AdminDashboard() {
             icon: Clock,
             color: 'bg-amber-50 text-amber-600',
             href: '/admin/reports?status=pending'
-        }
-    ];
-
-    const quickActions = [
-        {
-            title: 'Yeni Denetçi Oluştur',
-            description: 'Sisteme yeni denetçi kullanıcısı ekle',
-            href: '/admin/inspectors',
-            color: 'bg-blue-600 hover:bg-blue-700'
-        },
-        {
-            title: 'Yeni Raporcu Oluştur',
-            description: 'Sisteme yeni raporcu kullanıcısı ekle',
-            href: '/admin/reporters',
-            color: 'bg-green-600 hover:bg-green-700'
-        },
-        {
-            title: 'Rapor Yönetimi',
-            description: 'Raporları görüntüle ve ata',
-            href: '/admin/reports',
-            color: 'bg-purple-600 hover:bg-purple-700'
         }
     ];
 
@@ -145,20 +124,75 @@ export default function AdminDashboard() {
                 })}
             </div>
 
-            {/* Quick Actions */}
+            {/* Main Sections */}
             <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Hızlı İşlemler</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">Ana Bölümler</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    {quickActions.map((action) => (
-                        <Link
-                            key={action.title}
-                            href={action.href}
-                            className={`${action.color} text-white p-6 rounded-xl transition-all hover:scale-105`}
-                        >
-                            <h3 className="font-semibold text-lg mb-2">{action.title}</h3>
-                            <p className="text-sm opacity-90">{action.description}</p>
-                        </Link>
-                    ))}
+                    {/* Denetçiler Section */}
+                    <Link
+                        href="/admin/inspectors"
+                        className="bg-blue-600 hover:bg-blue-700 text-white p-6 rounded-xl transition-all hover:scale-105 group"
+                    >
+                        <div className="flex items-center space-x-4 mb-4">
+                            <div className="p-3 bg-blue-500 rounded-lg">
+                                <Users className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Denetim Ekibi</h3>
+                                <p className="text-blue-100 text-sm">Denetçi yönetimi</p>
+                            </div>
+                        </div>
+                        <div className="border-t border-blue-500 pt-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-blue-100 text-sm">Toplam Denetçi</span>
+                                <span className="text-2xl font-bold">{stats.totalInspectors}</span>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Raporcular Section */}
+                    <Link
+                        href="/admin/reporters"
+                        className="bg-green-600 hover:bg-green-700 text-white p-6 rounded-xl transition-all hover:scale-105 group"
+                    >
+                        <div className="flex items-center space-x-4 mb-4">
+                            <div className="p-3 bg-green-500 rounded-lg">
+                                <Users className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Raporlama Ekibi</h3>
+                                <p className="text-green-100 text-sm">Raporcu yönetimi</p>
+                            </div>
+                        </div>
+                        <div className="border-t border-green-500 pt-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-green-100 text-sm">Toplam Raporcu</span>
+                                <span className="text-2xl font-bold">{stats.totalReporters}</span>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Raporlar Section */}
+                    <Link
+                        href="/admin/reports"
+                        className="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-xl transition-all hover:scale-105 group"
+                    >
+                        <div className="flex items-center space-x-4 mb-4">
+                            <div className="p-3 bg-purple-500 rounded-lg">
+                                <FileText className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Raporlar</h3>
+                                <p className="text-purple-100 text-sm">Rapor yönetimi</p>
+                            </div>
+                        </div>
+                        <div className="border-t border-purple-500 pt-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-purple-100 text-sm">Toplam Rapor</span>
+                                <span className="text-2xl font-bold">{stats.totalReports}</span>
+                            </div>
+                        </div>
+                    </Link>
                 </div>
             </div>
 
@@ -167,7 +201,9 @@ export default function AdminDashboard() {
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Sistem Durumu</h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-green-600">{(stats.finalizedReports / Math.max(stats.totalReports, 1) * 100).toFixed(0)}%</div>
+                        <div className="text-2xl font-bold text-green-600">
+                            {(stats.finalizedReports / Math.max(stats.totalReports, 1) * 100).toFixed(0)}%
+                        </div>
                         <div className="text-sm text-gray-600">Tamamlanan Raporlar</div>
                     </div>
                     <div className="text-center">
