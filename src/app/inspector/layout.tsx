@@ -85,7 +85,7 @@ export default function InspectorLayout({ children }: { children: React.ReactNod
                                         <p className="text-sm text-gray-600">
                                             Hoş geldin, <span className="font-medium text-blue-600">{inspector.name}</span>
                                         </p>
-                                        <div className="text-xs bg-gray-100 px-2 py-1 rounded">
+                                        <div className="text-xs bg-gray-900 px-2 py-1 rounded">
                                             ID: {inspector.id}
                                         </div>
                                     </div>

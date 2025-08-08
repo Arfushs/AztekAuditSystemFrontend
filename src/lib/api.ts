@@ -132,10 +132,25 @@ export const apiService = {
 
     // Reporter APIs
     reporter: {
+        // Mevcut API
         uploadFinalFiles: (reportId: string, files: FormData) =>
             api.post(`/reporters/upload-final-files?reportId=${reportId}`, files, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             }),
+
+        // Yeni API'ler - Reporter için gerekli
+        getMyAssignedReports: (reporterId: string) => api.get(`/reporters/my-assigned-reports?reporterId=${reporterId}`),
+        getReportFiles: (reportId: string) => api.get(`/reporters/report-files/${reportId}`),
+        deleteFinalFile: (reportId: string, fileName: string) =>
+            api.delete(`/reporters/delete-final-file/${reportId}?fileName=${encodeURIComponent(fileName)}`),
+
+        // Helper metod
+        getCurrentReporterId: (): string => {
+            if (typeof window !== 'undefined') {
+                return localStorage.getItem('userId') || '';
+            }
+            return '';
+        }
     },
 
     // Shared APIs
