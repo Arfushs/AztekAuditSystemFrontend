@@ -1,4 +1,4 @@
-// src/lib/api.ts
+// src/lib/api.ts - Updated Inspector API Service
 import axios from 'axios';
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
@@ -45,9 +45,23 @@ api.interceptors.response.use(
 
 // API Service Functions
 export const apiService = {
-    // Auth
+    // Auth - YENİ LOGIN API
+    login: async (accessKey: string) => {
+        // Access key olmadan API çağrısı yap
+        const tempApi = axios.create({
+            baseURL: API_BASE_URL,
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            timeout: 30000,
+        });
+
+        return tempApi.post('/shared/login', { accessKey });
+    },
+
+    // Eski testAccess metodunu kaldırabiliriz veya backup olarak saklayabiliriz
     testAccess: async (role: string, accessKey: string) => {
-        // Geçici header ile API çağrısı
+        // Artık kullanılmayacak, ama backup olarak kalsın
         const tempApi = axios.create({
             baseURL: API_BASE_URL,
             headers: {
@@ -61,7 +75,8 @@ export const apiService = {
             case 'admin':
                 return tempApi.get('/admins/get-all-users');
             case 'inspector':
-                return tempApi.post('/inspectors/create-report?reportName=test&inspectorId=test');
+                // Inspector için profil çekmeyi dene - daha güvenli
+                return tempApi.get('/inspectors/profile?inspectorId=00000000-0000-0000-0000-000000000000');
             case 'reporter':
                 return tempApi.post('/reporters/upload-final-files?reportId=test');
             default:
@@ -80,17 +95,39 @@ export const apiService = {
         unassignReport: (reportId: string) => api.post(`/admins/unassign-report?reportId=${reportId}`),
         deleteInspector: (id: string) => api.delete(`/admins/delete-inspector/${id}`),
         deleteReporter: (id: string) => api.delete(`/admins/delete-reporter/${id}`),
-
     },
 
-    // Inspector APIs
+    // Inspector APIs - UPDATED & EXPANDED
     inspector: {
+        // Mevcut API'ler - Inspector ID gerekli olanlar
         createReport: (reportName: string, inspectorId: string) =>
             api.post(`/inspectors/create-report?reportName=${encodeURIComponent(reportName)}&inspectorId=${inspectorId}`),
+
+        // Inspector ID gerekli olanlar - Profile ve Reports
+        getProfile: (inspectorId: string) => api.get(`/inspectors/profile?inspectorId=${inspectorId}`),
+        getMyReports: (inspectorId: string) => api.get(`/inspectors/my-reports?inspectorId=${inspectorId}`),
+
+        // Inspector ID gerekli OLMAYANLAR - ReportId yeterli
         uploadRawFiles: (reportId: string, files: FormData) =>
             api.post(`/inspectors/upload-raw-files?reportId=${reportId}`, files, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             }),
+        getReportFiles: (reportId: string) => api.get(`/inspectors/report-files/${reportId}`),
+        deleteFile: (reportId: string, fileName: string) =>
+            api.delete(`/inspectors/delete-file/${reportId}?fileName=${encodeURIComponent(fileName)}`),
+        updateReportStatus: (reportId: string, status: string) =>
+            api.put(`/inspectors/update-report-status/${reportId}?status=${status}`),
+        deleteReport: (reportId: string) => api.delete(`/inspectors/delete-report/${reportId}`),
+        updateReportName: (reportId: string, name: string) =>
+            api.put(`/inspectors/update-report-name/${reportId}?name=${encodeURIComponent(name)}`),
+
+        // Helper metod
+        getCurrentInspectorId: (): string => {
+            if (typeof window !== 'undefined') {
+                return localStorage.getItem('userId') || '';
+            }
+            return '';
+        }
     },
 
     // Reporter APIs
