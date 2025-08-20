@@ -1,17 +1,17 @@
-// src/lib/api.ts - Updated Inspector API Service
+// src/lib/api.ts
 import axios from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5099/api';
 
 export const api = axios.create({
     baseURL: API_BASE_URL,
     headers: {
         'Content-Type': 'application/json',
     },
-    timeout: 30000, // 30 saniye timeout
+    timeout: 30000,
 });
 
-// Request interceptor - her request'e access_key header'ını ekle
+// Request interceptor
 api.interceptors.request.use(
     (config) => {
         if (typeof window !== 'undefined') {
@@ -27,15 +27,16 @@ api.interceptors.request.use(
     }
 );
 
-// Response interceptor - hata durumlarını handle et
+// Response interceptor
 api.interceptors.response.use(
     (response) => response,
     (error) => {
         if (error.response?.status === 401 || error.response?.status === 403) {
-            // Client-side kontrolü
             if (typeof window !== 'undefined') {
                 localStorage.removeItem('accessKey');
                 localStorage.removeItem('userRole');
+                localStorage.removeItem('userId');
+                localStorage.removeItem('userName');
                 window.location.href = '/login';
             }
         }
@@ -43,25 +44,18 @@ api.interceptors.response.use(
     }
 );
 
-// API Service Functions
 export const apiService = {
-    // Auth - YENİ LOGIN API
+    // Auth APIs
     login: async (accessKey: string) => {
-        // Access key olmadan API çağrısı yap
         const tempApi = axios.create({
             baseURL: API_BASE_URL,
-            headers: {
-                'Content-Type': 'application/json',
-            },
+            headers: { 'Content-Type': 'application/json' },
             timeout: 30000,
         });
-
         return tempApi.post('/shared/login', { accessKey });
     },
 
-    // Eski testAccess metodunu kaldırabiliriz veya backup olarak saklayabiliriz
     testAccess: async (role: string, accessKey: string) => {
-        // Artık kullanılmayacak, ama backup olarak kalsın
         const tempApi = axios.create({
             baseURL: API_BASE_URL,
             headers: {
@@ -75,10 +69,11 @@ export const apiService = {
             case 'admin':
                 return tempApi.get('/admins/get-all-users');
             case 'inspector':
-                // Inspector için profil çekmeyi dene - daha güvenli
                 return tempApi.get('/inspectors/profile?inspectorId=00000000-0000-0000-0000-000000000000');
             case 'reporter':
                 return tempApi.post('/reporters/upload-final-files?reportId=test');
+            case 'client':
+                return tempApi.get('/clients/my-reports');
             default:
                 throw new Error('Invalid role');
         }
@@ -86,6 +81,7 @@ export const apiService = {
 
     // Admin APIs
     admin: {
+        // User Management
         getAllUsers: () => api.get('/admins/get-all-users'),
         getAllReports: () => api.get('/admins/get-all-reports'),
         createInspector: (name: string) => api.post(`/admins/create-inspector?name=${encodeURIComponent(name)}`),
@@ -95,19 +91,45 @@ export const apiService = {
         unassignReport: (reportId: string) => api.post(`/admins/unassign-report?reportId=${reportId}`),
         deleteInspector: (id: string) => api.delete(`/admins/delete-inspector/${id}`),
         deleteReporter: (id: string) => api.delete(`/admins/delete-reporter/${id}`),
+
+        // Client Management
+        createClient: (name: string) => api.post(`/admins/create-client?name=${encodeURIComponent(name)}`),
+        getAllClients: () => api.get('/admins/get-all-clients'),
+        deleteClient: (id: string) => api.delete(`/admins/delete-client/${id}`),
+
+        // Client Reports Management
+        createClientReport: (name: string) => api.post(`/admins/create-client-report?name=${encodeURIComponent(name)}`),
+        getAllClientReports: () => api.get('/admins/get-all-client-reports'),
+        getClientReport: (reportId: string) => api.get(`/admins/get-client-report/${reportId}`),
+        updateClientReportName: (reportId: string, name: string) =>
+            api.put(`/admins/update-client-report-name/${reportId}?name=${encodeURIComponent(name)}`),
+        assignClientReport: (reportId: string, clientId: string) =>
+            api.post(`/admins/assign-client-report?reportId=${reportId}&clientId=${clientId}`),
+        unassignClientReport: (reportId: string) => api.post(`/admins/unassign-client-report?reportId=${reportId}`),
+        deleteClientReport: (reportId: string) => api.delete(`/admins/delete-client-report/${reportId}`),
+
+        // Client Report Files
+        uploadClientReportFile: (reportId: string, file: FormData) =>
+            api.post(`/admins/upload-client-report-file/${reportId}`, file, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }),
+        uploadClientReportFiles: (reportId: string, files: FormData) =>
+            api.post(`/admins/upload-client-report-files/${reportId}`, files, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            }),
+        getClientReportFiles: (reportId: string) => api.get(`/admins/get-client-report-files/${reportId}`),
+        deleteClientReportFile: (reportId: string, fileName: string) =>
+            api.delete(`/admins/delete-client-report-file/${reportId}?fileName=${encodeURIComponent(fileName)}`),
+        downloadClientReportZip: (reportId: string) =>
+            api.get(`/admins/download-client-report-zip/${reportId}`, { responseType: 'blob' }),
     },
 
-    // Inspector APIs - UPDATED & EXPANDED
+    // Inspector APIs
     inspector: {
-        // Mevcut API'ler - Inspector ID gerekli olanlar
         createReport: (reportName: string, inspectorId: string) =>
             api.post(`/inspectors/create-report?reportName=${encodeURIComponent(reportName)}&inspectorId=${inspectorId}`),
-
-        // Inspector ID gerekli olanlar - Profile ve Reports
         getProfile: (inspectorId: string) => api.get(`/inspectors/profile?inspectorId=${inspectorId}`),
         getMyReports: (inspectorId: string) => api.get(`/inspectors/my-reports?inspectorId=${inspectorId}`),
-
-        // Inspector ID gerekli OLMAYANLAR - ReportId yeterli
         uploadRawFiles: (reportId: string, files: FormData) =>
             api.post(`/inspectors/upload-raw-files?reportId=${reportId}`, files, {
                 headers: { 'Content-Type': 'multipart/form-data' }
@@ -121,7 +143,6 @@ export const apiService = {
         updateReportName: (reportId: string, name: string) =>
             api.put(`/inspectors/update-report-name/${reportId}?name=${encodeURIComponent(name)}`),
 
-        // Helper metod
         getCurrentInspectorId: (): string => {
             if (typeof window !== 'undefined') {
                 return localStorage.getItem('userId') || '';
@@ -132,20 +153,35 @@ export const apiService = {
 
     // Reporter APIs
     reporter: {
-        // Mevcut API
         uploadFinalFiles: (reportId: string, files: FormData) =>
             api.post(`/reporters/upload-final-files?reportId=${reportId}`, files, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             }),
-
-        // Yeni API'ler - Reporter için gerekli
         getMyAssignedReports: (reporterId: string) => api.get(`/reporters/my-assigned-reports?reporterId=${reporterId}`),
         getReportFiles: (reportId: string) => api.get(`/reporters/report-files/${reportId}`),
         deleteFinalFile: (reportId: string, fileName: string) =>
             api.delete(`/reporters/delete-final-file/${reportId}?fileName=${encodeURIComponent(fileName)}`),
 
-        // Helper metod
         getCurrentReporterId: (): string => {
+            if (typeof window !== 'undefined') {
+                return localStorage.getItem('userId') || '';
+            }
+            return '';
+        }
+    },
+
+    // Client APIs
+    client: {
+        getMyReports: () => api.get('/clients/my-reports'),
+        getMyReport: (reportId: string) => api.get(`/clients/my-reports/${reportId}`),
+        getMyReportFiles: (reportId: string) => api.get(`/clients/my-reports/${reportId}/files`),
+        downloadReportZip: (reportId: string) =>
+            api.get(`/clients/download-report-zip/${reportId}`, { responseType: 'blob' }),
+        getDownloadUrl: (reportId: string, fileName: string) =>
+            api.get(`/clients/download-file/${reportId}?fileName=${encodeURIComponent(fileName)}`),
+        getProfile: () => api.get('/clients/profile'),
+
+        getCurrentClientId: (): string => {
             if (typeof window !== 'undefined') {
                 return localStorage.getItem('userId') || '';
             }
@@ -160,8 +196,12 @@ export const apiService = {
                 responseType: 'blob'
             }),
         getReportNameByID: async (reportId: string): Promise<string | null> => {
-            const response = await api.get(`/shared/get-report-name-by-id?reportId=${reportId}`);
-            return response.data || null;
+            try {
+                const response = await api.get(`/shared/get-report-name-by-id?reportId=${reportId}`);
+                return response.data || null;
+            } catch (error) {
+                return null;
+            }
         }
     },
 };

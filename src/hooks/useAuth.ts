@@ -17,7 +17,6 @@ export function useAuth() {
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
-        // Component mount olduğunda localStorage'dan kontrol et
         const initAuth = () => {
             const accessKey = localStorage.getItem('accessKey');
             const userRole = localStorage.getItem('userRole');
@@ -43,13 +42,11 @@ export function useAuth() {
         try {
             setIsLoading(true);
 
-            // Yeni login API'sini kullan
             const response = await apiService.login(accessKey);
 
             if (response.data.success) {
                 const { user: userData, role } = response.data;
 
-                // User object oluştur
                 const userObj: User = {
                     id: userData.id,
                     name: userData.name,
@@ -58,7 +55,6 @@ export function useAuth() {
                     createdAt: userData.createdAt
                 };
 
-                // LocalStorage'a kaydet
                 localStorage.setItem('accessKey', accessKey);
                 localStorage.setItem('userRole', role);
                 localStorage.setItem('userId', userData.id);
@@ -72,7 +68,6 @@ export function useAuth() {
             }
 
         } catch (error: any) {
-            // Network veya server hatası
             const errorMessage = error.response?.data?.error ||
                 error.response?.data?.message ||
                 'Bağlantı hatası';
@@ -83,19 +78,16 @@ export function useAuth() {
         }
     };
 
-    // Fallback - eski sistem için (gerekirse)
     const loginLegacy = async (accessKey: string): Promise<LoginResult> => {
         try {
             setIsLoading(true);
 
-            // Rolleri sırayla test et (eski sistem)
-            const roles: UserRole[] = ['admin', 'inspector', 'reporter'];
+            const roles: UserRole[] = ['admin', 'inspector', 'reporter', 'client'];
 
             for (const role of roles) {
                 try {
                     const response = await apiService.testAccess(role, accessKey);
 
-                    // Başarılı - bu rolde erişim var
                     localStorage.setItem('accessKey', accessKey);
                     localStorage.setItem('userRole', role);
 
@@ -113,7 +105,6 @@ export function useAuth() {
                 } catch (error: unknown) {
                     const axiosError = error as { response?: { status?: number }; message?: string };
 
-                    // 400 hatası alıyorsak endpoint'e erişebiliyoruz demektir (sadece parametre hatası)
                     if (axiosError.response?.status === 400) {
                         localStorage.setItem('accessKey', accessKey);
                         localStorage.setItem('userRole', role);
@@ -129,12 +120,10 @@ export function useAuth() {
                         setUser(userObj);
                         return { success: true, role, user: userObj };
                     }
-                    // 401 veya 403 ise bu rolde yetkisi yok, devam et
                     continue;
                 }
             }
 
-            // Hiçbir rolde erişim bulunamadı
             return { success: false, error: 'Geçersiz erişim anahtarı' };
 
         } catch (error) {
@@ -156,13 +145,33 @@ export function useAuth() {
         return user?.role === requiredRole;
     };
 
+    const isClient = (): boolean => {
+        return user?.role === 'client';
+    };
+
+    const isAdmin = (): boolean => {
+        return user?.role === 'admin';
+    };
+
+    const isInspector = (): boolean => {
+        return user?.role === 'inspector';
+    };
+
+    const isReporter = (): boolean => {
+        return user?.role === 'reporter';
+    };
+
     return {
         user,
         isLoading,
         isAuthenticated: !!user,
         login,
-        loginLegacy, // Backup olarak
+        loginLegacy,
         logout,
-        hasRole
+        hasRole,
+        isClient,
+        isAdmin,
+        isInspector,
+        isReporter
     };
 }

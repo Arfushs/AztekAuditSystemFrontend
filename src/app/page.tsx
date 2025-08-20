@@ -17,7 +17,7 @@ export default function HomePage() {
             return;
         }
 
-        // Kullanıcı giriş yapmışsa rolüne göre yönlendir
+        // Kullanıcı giriş yapmışsa rolüne göre yönlendir (client eklendi)
         switch (user?.role) {
             case 'admin':
                 router.push('/admin');
@@ -27,6 +27,9 @@ export default function HomePage() {
                 break;
             case 'reporter':
                 router.push('/reporter');
+                break;
+            case 'client':
+                router.push('/client');
                 break;
             default:
                 router.push('/login');

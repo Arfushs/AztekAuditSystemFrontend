@@ -15,7 +15,7 @@ export default function LoginPage() {
     const { login, isAuthenticated, user } = useAuth();
     const router = useRouter();
 
-    // Zaten giriş yapmışsa yönlendir
+    // Zaten giriş yapmışsa yönlendir (client eklendi)
     useEffect(() => {
         if (isAuthenticated && user) {
             switch (user.role) {
@@ -27,6 +27,12 @@ export default function LoginPage() {
                     break;
                 case 'reporter':
                     router.push('/reporter');
+                    break;
+                case 'client':
+                    router.push('/client');
+                    break;
+                default:
+                    router.push('/');
                     break;
             }
         }
@@ -123,9 +129,15 @@ export default function LoginPage() {
                 </form>
 
                 <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-gray-500 mb-3">
                         Erişim anahtarınız yoksa sistem yöneticinizle iletişime geçin.
                     </p>
+                    <div className="flex flex-wrap justify-center gap-2 text-xs">
+                        <span className="bg-red-100 text-red-600 px-2 py-1 rounded">Yönetici</span>
+                        <span className="bg-blue-100 text-blue-600 px-2 py-1 rounded">Denetçi</span>
+                        <span className="bg-green-100 text-green-600 px-2 py-1 rounded">Raporcu</span>
+                        <span className="bg-purple-100 text-purple-600 px-2 py-1 rounded">Yatırımcı</span>
+                    </div>
                 </div>
             </div>
         </div>

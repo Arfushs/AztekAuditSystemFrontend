@@ -2,15 +2,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Users, FileText, TrendingUp, Clock } from 'lucide-react';
+import { Users, FileText, Clock, Building2 } from 'lucide-react';
 import { apiService } from '@/lib/api';
-import { User, Report } from '@/types';
+import { User, Report, ClientReport } from '@/types';
 import Link from 'next/link';
 
 interface DashboardStats {
     totalInspectors: number;
     totalReporters: number;
+    totalClients: number;
     totalReports: number;
+    totalClientReports: number;
     finalizedReports: number;
     pendingReports: number;
 }
@@ -19,7 +21,9 @@ export default function AdminDashboard() {
     const [stats, setStats] = useState<DashboardStats>({
         totalInspectors: 0,
         totalReporters: 0,
+        totalClients: 0,
         totalReports: 0,
+        totalClientReports: 0,
         finalizedReports: 0,
         pendingReports: 0
     });
@@ -31,18 +35,24 @@ export default function AdminDashboard() {
 
     const loadDashboardData = async () => {
         try {
-            const [usersResponse, reportsResponse] = await Promise.all([
+            const [usersResponse, reportsResponse, clientsResponse, clientReportsResponse] = await Promise.all([
                 apiService.admin.getAllUsers(),
-                apiService.admin.getAllReports()
+                apiService.admin.getAllReports(),
+                apiService.admin.getAllClients().catch(() => ({ data: [] })),
+                apiService.admin.getAllClientReports().catch(() => ({ data: [] }))
             ]);
 
             const users: User[] = usersResponse.data;
             const reports: Report[] = reportsResponse.data;
+            const clients: User[] = clientsResponse.data;
+            const clientReports: ClientReport[] = clientReportsResponse.data;
 
             setStats({
                 totalInspectors: users.filter(u => u.role === 'inspector').length,
                 totalReporters: users.filter(u => u.role === 'reporter').length,
+                totalClients: clients.length,
                 totalReports: reports.length,
+                totalClientReports: clientReports.length,
                 finalizedReports: reports.filter(r => r.status === 'finalized').length,
                 pendingReports: reports.filter(r => r.status === 'pending').length
             });
@@ -69,10 +79,17 @@ export default function AdminDashboard() {
             href: '/admin/reporters'
         },
         {
-            name: 'Toplam Rapor',
+            name: 'Toplam Yatırımcı',
+            value: stats.totalClients.toString(),
+            icon: Building2,
+            color: 'bg-purple-50 text-purple-600',
+            href: '/admin/clients'
+        },
+        {
+            name: 'Denetim Raporu',
             value: stats.totalReports.toString(),
             icon: FileText,
-            color: 'bg-purple-50 text-purple-600',
+            color: 'bg-indigo-50 text-indigo-600',
             href: '/admin/reports'
         },
         {
@@ -101,7 +118,7 @@ export default function AdminDashboard() {
             </div>
 
             {/* Stats Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {statsCards.map((stat) => {
                     const Icon = stat.icon;
                     return (
@@ -127,7 +144,7 @@ export default function AdminDashboard() {
             {/* Main Sections */}
             <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Ana Bölümler</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                     {/* Denetçiler Section */}
                     <Link
                         href="/admin/inspectors"
@@ -172,23 +189,45 @@ export default function AdminDashboard() {
                         </div>
                     </Link>
 
-                    {/* Raporlar Section */}
+                    {/* Yatırımcılar Section */}
                     <Link
-                        href="/admin/reports"
+                        href="/admin/clients"
                         className="bg-purple-600 hover:bg-purple-700 text-white p-6 rounded-xl transition-all hover:scale-105 group"
                     >
                         <div className="flex items-center space-x-4 mb-4">
                             <div className="p-3 bg-purple-500 rounded-lg">
-                                <FileText className="h-6 w-6 text-white" />
+                                <Building2 className="h-6 w-6 text-white" />
                             </div>
                             <div>
-                                <h3 className="font-semibold text-lg">Raporlar</h3>
-                                <p className="text-purple-100 text-sm">Rapor yönetimi</p>
+                                <h3 className="font-semibold text-lg">Yatırımcılar</h3>
+                                <p className="text-purple-100 text-sm">Yatırımcı yönetimi</p>
                             </div>
                         </div>
                         <div className="border-t border-purple-500 pt-3">
                             <div className="flex justify-between items-center">
-                                <span className="text-purple-100 text-sm">Toplam Rapor</span>
+                                <span className="text-purple-100 text-sm">Toplam Yatırımcı</span>
+                                <span className="text-2xl font-bold">{stats.totalClients}</span>
+                            </div>
+                        </div>
+                    </Link>
+
+                    {/* Denetim Raporları Section */}
+                    <Link
+                        href="/admin/reports"
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white p-6 rounded-xl transition-all hover:scale-105 group"
+                    >
+                        <div className="flex items-center space-x-4 mb-4">
+                            <div className="p-3 bg-indigo-500 rounded-lg">
+                                <FileText className="h-6 w-6 text-white" />
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-lg">Denetim Raporları</h3>
+                                <p className="text-indigo-100 text-sm">Rapor yönetimi</p>
+                            </div>
+                        </div>
+                        <div className="border-t border-indigo-500 pt-3">
+                            <div className="flex justify-between items-center">
+                                <span className="text-indigo-100 text-sm">Toplam Rapor</span>
                                 <span className="text-2xl font-bold">{stats.totalReports}</span>
                             </div>
                         </div>
@@ -199,7 +238,7 @@ export default function AdminDashboard() {
             {/* System Status */}
             <div className="bg-white rounded-xl border border-gray-200 p-6">
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">Sistem Durumu</h2>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                     <div className="text-center">
                         <div className="text-2xl font-bold text-green-600">
                             {(stats.finalizedReports / Math.max(stats.totalReports, 1) * 100).toFixed(0)}%
@@ -211,7 +250,11 @@ export default function AdminDashboard() {
                         <div className="text-sm text-gray-600">Denetçi Başına Rapor</div>
                     </div>
                     <div className="text-center">
-                        <div className="text-2xl font-bold text-purple-600">{stats.totalInspectors + stats.totalReporters}</div>
+                        <div className="text-2xl font-bold text-purple-600">{stats.totalClientReports}</div>
+                        <div className="text-sm text-gray-600">Yatırımcı Raporları</div>
+                    </div>
+                    <div className="text-center">
+                        <div className="text-2xl font-bold text-gray-600">{stats.totalInspectors + stats.totalReporters + stats.totalClients}</div>
                         <div className="text-sm text-gray-600">Toplam Kullanıcı</div>
                     </div>
                 </div>

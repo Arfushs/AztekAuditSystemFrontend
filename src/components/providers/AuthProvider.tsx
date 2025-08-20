@@ -18,7 +18,8 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
             return;
         }
 
-        const protectedRoutes = ['/admin', '/inspector', '/reporter'];
+        // Protected routes'a client eklendi
+        const protectedRoutes = ['/admin', '/inspector', '/reporter', '/client'];
         const isProtectedRoute = protectedRoutes.some(route => {
             const matches = pathname.startsWith(route);
             console.log(`📝 Checking route ${route} against ${pathname}: ${matches}`);
@@ -55,9 +56,18 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                 return;
             }
 
-            // Rol kontrolü
-            const currentRole = pathname.split('/')[1]; // admin, inspector, reporter
+            // Rol kontrolü (client eklendi)
+            const currentRole = pathname.split('/')[1]; // admin, inspector, reporter, client
             console.log('🎭 Role check:', { currentRole, userRole });
+
+            // Valid roles array'ine client eklendi
+            const validRoles = ['admin', 'inspector', 'reporter', 'client'];
+
+            if (!validRoles.includes(userRole)) {
+                console.log('🚫 Invalid user role, redirecting to login');
+                window.location.replace('/login');
+                return;
+            }
 
             if (currentRole !== userRole) {
                 console.log('🚫 Wrong role access, redirecting to correct panel');

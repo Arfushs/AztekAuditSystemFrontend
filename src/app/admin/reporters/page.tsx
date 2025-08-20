@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { User, Report } from '@/types';
 import { apiService } from '@/lib/api';
-import { UserPlus, Users, Plus, X, Key, Calendar, ArrowLeft, Hash, ChevronRight, Settings } from 'lucide-react';
+import { UserPlus, Users, Plus, X, Key, Calendar, ArrowLeft, Hash, ChevronRight, Settings, Copy, Check } from 'lucide-react';
 import { formatDate, getRoleText } from '@/lib/utils';
 import Link from 'next/link';
 import ReporterDetail from '@/components/admin/ReporterDetail';
@@ -18,6 +18,7 @@ export default function ReportersPage() {
     const [newReporterName, setNewReporterName] = useState('');
     const [isCreating, setIsCreating] = useState(false);
     const [showAssignModal, setShowAssignModal] = useState(false);
+    const [copiedKey, setCopiedKey] = useState<string | null>(null);
 
     useEffect(() => {
         loadReporters();
@@ -73,6 +74,49 @@ export default function ReportersPage() {
             loadReporters();
         } catch (error) {
             console.error('Failed to delete reporter:', error);
+        }
+    };
+
+    const handleCopyAccessKey = async (accessKey: string, e: React.MouseEvent) => {
+        e.stopPropagation(); // Prevent row click
+
+        // Check if clipboard API is available
+        if (navigator.clipboard && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(accessKey);
+                setCopiedKey(accessKey);
+                setTimeout(() => setCopiedKey(null), 2000); // Reset after 2 seconds
+                return;
+            } catch (error) {
+                console.error('Clipboard API failed:', error);
+                // Fall through to fallback method
+            }
+        }
+
+        // Fallback method for older browsers or non-secure contexts
+        try {
+            const textArea = document.createElement('textarea');
+            textArea.value = accessKey;
+            textArea.style.position = 'fixed';
+            textArea.style.left = '-999999px';
+            textArea.style.top = '-999999px';
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+
+            const successful = document.execCommand('copy');
+            document.body.removeChild(textArea);
+
+            if (successful) {
+                setCopiedKey(accessKey);
+                setTimeout(() => setCopiedKey(null), 2000);
+            } else {
+                console.error('Copy command failed');
+                alert('Kopyalama işlemi başarısız oldu. Lütfen manuel olarak kopyalayın.');
+            }
+        } catch (fallbackError) {
+            console.error('Fallback copy failed:', fallbackError);
+            alert('Kopyalama işlemi başarısız oldu. Lütfen manuel olarak kopyalayın.');
         }
     };
 
@@ -261,6 +305,17 @@ export default function ReportersPage() {
                                                     <code className="bg-gray-100 px-2 py-1 rounded font-mono text-gray-800 text-xs">
                                                         {reporter.accessKey}
                                                     </code>
+                                                    <button
+                                                        onClick={(e) => handleCopyAccessKey(reporter.accessKey, e)}
+                                                        className="ml-1 p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded transition-colors"
+                                                        title="Erişim anahtarını kopyala"
+                                                    >
+                                                        {copiedKey === reporter.accessKey ? (
+                                                            <Check className="h-3 w-3 text-green-600" />
+                                                        ) : (
+                                                            <Copy className="h-3 w-3" />
+                                                        )}
+                                                    </button>
                                                 </div>
                                                 <div className="flex items-center space-x-2">
                                                     <Calendar className="h-4 w-4 text-gray-400" />
