@@ -48,7 +48,7 @@ export const apiService = {
     // Auth APIs
     login: async (accessKey: string) => {
         const tempApi = axios.create({
-            baseURL: API_BASE_URL,
+            baseURL: `${API_BASE_URL}/api`,
             headers: { 'Content-Type': 'application/json' },
             timeout: 30000,
         });
@@ -57,7 +57,7 @@ export const apiService = {
 
     testAccess: async (role: string, accessKey: string) => {
         const tempApi = axios.create({
-            baseURL: API_BASE_URL,
+            baseURL: `${API_BASE_URL}/api`,
             headers: {
                 'Content-Type': 'application/json',
                 'access_key': accessKey
