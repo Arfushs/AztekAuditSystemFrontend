@@ -125,7 +125,7 @@ export default function ClientDetail({ client, onReportUnassigned }: ClientDetai
                         <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                         <p className="text-gray-500">Bu yatırımcıya henüz rapor atanmamış</p>
                         <p className="text-sm text-gray-400 mt-2">
-                            "Rapor Atama" butonunu kullanarak rapor atayabilirsiniz
+                            &#34;Rapor Atama&#34; butonunu kullanarak rapor atayabilirsiniz
                         </p>
                     </div>
                 ) : (
